@@ -1,0 +1,456 @@
+﻿@{
+    Layout = null;
+    ViewBag.Title = "服務資料";
+}
+
+<!DOCTYPE html>
+
+<html ng-app>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title> 
+    <link href="~/Content/myStyle.css" rel="stylesheet" />
+    <script src="~/Scripts/jquery-1.11.3.min.js"></script>
+    <script src="~/Scripts/angular.min.js"></script>
+    <script src="~/Scripts/jquery.blockUI.js"></script>
+    <!-- 最新編譯和最佳化的 CSS -->
+    <link href="~/Content/bootstrap-3.3.1.min.css" rel="stylesheet" />
+
+    <!-- 選擇性佈景主題 -->
+    <link href="~/Content/bootstrap-theme-3.3.1.min.css" rel="stylesheet" />
+
+    <!-- 最新編譯和最佳化的 JavaScript -->
+    <script src="~/Scripts/bootstrap-3.3.1.min.js"></script>
+
+    <!--[if lt IE 9]>
+    <script src="~/Scripts/html5.js"></script>
+    <![endif]-->
+    <!-- Internet Explorer AngularJS element creation -->
+    <!--[if lte IE 8]>
+    <script>
+        document.createElement('ng-include');
+        document.createElement('ng-pluralize');
+        document.createElement('ng-view');
+        document.createElement('ng:include');
+        document.createElement('ng:pluralize');
+        document.createElement('ng:view');
+    </script>
+    <![endif]-->  
+        <style type="text/css">
+        body {margin-left: 20px; 
+        }
+        .auto-style1 {
+            height: 37px;
+        }
+    </style>
+    <script type="text/javascript">
+        function TESTCtrl($scope, $http) {
+            $scope.ngTagName = '';//初始先給空
+            $scope.ngStatus = '';//初始先給空 
+            //分頁效果
+            $scope.rowCount = 10;//每頁幾筆
+            $scope.Datalength = 0;//回應的ROW比數
+            $scope.page = 0;//頁次
+            $scope.nowpage = 1;
+            $scope.newpage = 1;
+            //設定按鈕權限
+            $scope.qButton = '@Session["qButton"]';
+            $scope.iButton = '@Session["iButton"]';
+            $scope.eButton = '@Session["eButton"]';
+            //ajax使用
+            var url = "";
+            var ajaxurl = '@Session["ajaxurl"]';//從後端給的URL
+            var Indata = "";
+            //查詢 
+            $scope.Query = function (newpage) {
+                if ($scope.qButton == 'false') {
+                    $scope.ngMsg = "您沒有查詢權限"
+                    return;
+                }
+                url = ajaxurl + "/Default/IndexDataJson";
+                if (isNaN(newpage))
+                    $scope.newpage = 1;
+                else
+                    $scope.newpage = newpage;
+                Indata = "TagName=" + $scope.ngTagName + "&Status=" + $scope.ngStatus + "&rowCount=" + $scope.rowCount + "&newpage=" + $scope.newpage;
+                myajax(url, Indata, 'Q', '');
+            }
+            $scope.OpenInsert = function () {　//開啟Insert
+                $scope.inserting = !$scope.inserting;
+                Clear();
+            }
+            $scope.ClearIns = function () { //關閉Insert 
+                $scope.inserting = false;
+                Clear();
+            }
+            //Insert 批次 
+            $scope.addinsertList = JSON.parse("[{\"sn\":\"1\", \"TagName\": \"\", \"State\": \"1\", \"ImageURL\": \"\", \"Priority\": \"0\"}]");
+            for (var i = 0; i < $scope.addinsertList.length; i++) {
+                $scope.addinsertList[i].Priority = parseInt($scope.addinsertList[i].Priority);
+            }
+            $scope.add = function () {   //Insert DATA
+                if ($scope.iButton == 'false') {
+                    $scope.ngMsg = "您沒有新增權限"
+                    return;
+                }
+                $scope.ngMsg = "";
+                var re = /^[a-zA-Z0-9一-龜]*$/;
+                var reurl = /^http(s?)\:\/\/[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*(\/?)([a-zA-Z0-9\-\.\?\,\'\/\\\+&amp;%\$#_]*)?$/;
+
+                for (var i = 0; i < $scope.addinsertList.length; i++) {
+                    if ($scope.addinsertList[i].TagName == "") {
+                        $scope.ngMsg += "第" + (i + 1) + "標籤名稱請填寫|"; return;
+                    }
+                    if ($scope.addinsertList[i].ImageURL == "") {
+                        $scope.ngMsg += "第" + (i + 1) + "圖片網址請填寫|"; return;
+                    }
+                    if ($scope.addinsertList[i].Priority == "") {
+                        $scope.ngMsg += "第" + (i + 1) + "權重請填寫|"; return;
+                    }
+                    if (isNaN($scope.addinsertList[i].Priority)) {
+                        $scope.ngMsg += "第" + (i + 1) + "權重不是數字|"; return;
+                    }
+                    if ($scope.addinsertList[i].TagName.match(re) == null || $scope.addinsertList[i].TagName.match(re) == "") {
+                        $scope.ngMsg += "第" + (i + 1) + "標籤名稱請重新輸入|"; return;
+                    }
+                    if ($scope.addinsertList[i].ImageURL.match(reurl) == null || $scope.addinsertList[i].ImageURL.match(reurl) == "") {
+                        $scope.ngMsg += "第" + (i + 1) + "圖片網址請重新輸入|"; return;
+                    }
+                }
+                for (var i = 0; i < $scope.addinsertList.length; i++) {
+                    url = ajaxurl + "/Default/InsertDataJson";
+                    Indata = "TagName=" + encodeURIComponent($scope.addinsertList[i].TagName) + "&Status=" + $scope.addinsertList[i].State + "&Priority=" + encodeURIComponent($scope.addinsertList[i].Priority) + "&ImageURL=" + encodeURIComponent($scope.addinsertList[i].ImageURL);
+                    myajax(url, Indata, 'I', '');
+                }
+            }
+            $scope.addList = function () {   //Insert DATA
+                var addrow = "[";
+                for (var i = 0; i < $scope.addinsertList.length ; i++) {
+                    if (i == 0)
+                        addrow += "{\"TagName\": \"" + $scope.addinsertList[i].TagName + "\", \"State\": \"" + $scope.addinsertList[i].State + "\", \"ImageURL\": \"" + $scope.addinsertList[i].ImageURL + "\", \"Priority\": \"" + $scope.addinsertList[i].Priority + "\"}";
+                    else
+                        addrow += "," + "{\"TagName\": \"" + $scope.addinsertList[i].TagName + "\", \"State\": \"" + $scope.addinsertList[i].State + "\", \"ImageURL\": \"" + $scope.addinsertList[i].ImageURL + "\", \"Priority\": \"" + $scope.addinsertList[i].Priority + "\"}";
+                }
+                addrow += "," + "{\"TagName\": \"\", \"State\": \"1\", \"ImageURL\": \"\", \"Priority\": \"0\"}]";
+                $scope.addinsertList = JSON.parse(addrow);
+            }
+            function Clear() { //清除資料
+                //Insert  
+                $scope.addinsertList = JSON.parse("[{\"sn\":\"1\", \"TagName\": \"\", \"State\": \"1\", \"ImageURL\": \"\", \"Priority\": \"0\"}]");
+            }
+            //修改
+            $scope.allediting = function () { //內容全部開啟
+                for (var i = 0; i < $scope.Datalength; i++) {
+                    $scope.ReturnData[i].edit = true; //!$scope.ReturnData[i].edit;
+                    $scope.ReturnData[i].ngOneButton = false;
+                }
+                $scope.alleditbutton = true;
+            }
+            $scope.Update = function (index) { //Updata資料
+                if ($scope.eButton == 'false') {
+                    $scope.ngMsg = "您沒有修改權限"
+                    return;
+                }
+                var Sn = $scope.ReturnData[index].Sn;
+                var TagName = $scope.ReturnData[index].TagName;
+                var State = "";
+                if ($scope.ReturnData[index].State == "啟用")
+                    State = "1";
+                else
+                    State = "0";
+                var ImageURL = $scope.ReturnData[index].ImageURL;
+                var Priority = $scope.ReturnData[index].Priority;
+                if (isNaN(Priority)) {
+                    $scope.ngMsg = "權重不是數字";
+                    return;
+                }
+                url = ajaxurl + "/Default/UpDataJson";
+                Indata = "Sn=" + Sn + "&TagName=" + encodeURIComponent(TagName) + "&Status=" + State + "&Priority=" + encodeURIComponent(Priority) + "&ImageURL=" + encodeURIComponent(ImageURL) + "&QueryTagName=" + $scope.ngTagName + "&QueryStatus=" + $scope.ngStatus;
+                myajax(url, Indata, 'E', Sn);
+            };
+            $scope.UpdateAll = function () { //Updata資料 
+                if ($scope.eButton == 'false') {
+                    $scope.ngMsg = "您沒有修改權限"
+                    return;
+                }
+                for (var i = 0; i < $scope.Datalength; i++) {
+                    if (isNaN($scope.ReturnData[i].Priority)) {
+                        $scope.ngMsg = "標籤Sn" + Sn + "的權重不是數字";
+                        return;
+                    }
+                }
+                $scope.ngMsg = "";
+                for (var i = 0; i < $scope.Datalength; i++) { //這邊一定是正確資料
+                    var Sn = $scope.ReturnData[i].Sn;
+                    var TagName = $scope.ReturnData[i].TagName;
+                    var State = "";
+                    if ($scope.ReturnData[i].State == "啟用")
+                        State = "1";
+                    else
+                        State = "0";
+                    var ImageURL = $scope.ReturnData[i].ImageURL;
+                    var Priority = $scope.ReturnData[i].Priority;
+                    url = ajaxurl + "/Default/UpDataJson";
+                    Indata = "Sn=" + Sn + "&TagName=" + encodeURIComponent(TagName) + "&Status=" + State + "&Priority=" + encodeURIComponent(Priority) + "&ImageURL=" + encodeURIComponent(ImageURL) + "&QueryTagName=" + $scope.ngTagName + "&QueryStatus=" + $scope.ngStatus;
+
+                    myajax(url, Indata, 'E', Sn);
+                    $scope.ReturnData[i].edit = false;
+                    if (i == ($scope.Datalength - 1)) {
+                        $scope.alleditbutton = false;
+                    }
+                }
+            };
+            var FileName = "商品資訊設定";
+            $scope.Report = function () {
+                url = ajaxurl + "/Default/ReportExcel";
+                Indata = "FileName=" + encodeURIComponent(FileName);//"Sn=" + Sn + "&TagName=" + encodeURIComponent(TagName) + "&Status=" + State + "&Priority=" + encodeURIComponent(Priority) + "&ImageURL=" + encodeURIComponent(ImageURL) + "&QueryTagName=" + $scope.ngTagName + "&QueryStatus=" + $scope.ngStatus;
+                myajax(url, Indata, 'R', '');
+            }
+            $scope.Email = function () {
+                url = ajaxurl + "/Default/EmailExcel";
+                Indata = "FileName=" + encodeURIComponent(FileName);//"Sn=" + Sn + "&TagName=" + encodeURIComponent(TagName) + "&Status=" + State + "&Priority=" + encodeURIComponent(Priority) + "&ImageURL=" + encodeURIComponent(ImageURL) + "&QueryTagName=" + $scope.ngTagName + "&QueryStatus=" + $scope.ngStatus;
+                myajax(url, Indata, 'EMail', '');
+            }
+            function myajax(url, indata, type, Sn) { //只做後端查詢 );
+                $.blockUI({ message: '<h1><img src="' + ajaxurl + '/Image/loading.gif" /></h1>' });
+                switch (type.toUpperCase()) {
+                    case 'Q':
+                        $http({ method: 'POST', url: url, data: indata, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }).  //, cache: $templateCache
+                        success(function (data) {
+                            $scope.ngMsg = data.ReturnMsgNo.toString() + "|" + data.ReturnMsg;//+ "|" + data.ReturnData.length
+                            if (data.ReturnMsgNo == "1") {
+                                if (data.ReturnData.length == 0)
+                                    $scope.ngtable = false;
+                                else {
+                                    $scope.ngtable = true;
+                                    $scope.Datalength = data.ReturnData.length;
+                                    $scope.ReturnData = data.ReturnData;
+                                    for (var i = 0; i < data.ReturnData.length; i++) {
+                                        //因為input type 所以要轉
+                                        $scope.ReturnData[i].Priority = parseInt(data.ReturnData[i].Priority);
+                                    }
+                                    //這邊做分頁
+                                    $scope.nowpage = data.nowpage;
+                                    $scope.page = data.pageCount;
+                                    if (parseInt($scope.page) >= 1) {
+                                        var pageList = "[";
+                                        for (var i = 1; i <= parseInt($scope.page) ; i++) {
+                                            if (i == 1)
+                                                pageList += "{\"page\": \"" + i + "\"}"
+                                            else
+                                                pageList += ",{\"page\": \"" + i + "\"}"
+                                        }
+                                        pageList += "]"
+                                        $scope.pageList = JSON.parse(pageList);
+                                    }
+                                }
+                            }
+                            $.unblockUI();
+                        });
+                        break;
+                    case 'I':
+                        $http({ method: 'POST', url: url, data: indata, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }).  //, cache: $templateCache
+                        success(function (data) {
+                            if (data.ReturnMsgNo.toString() != "1") {
+                                $scope.ngMsg += "Sn " + Sn + " 失敗" + data.ReturnMsgNo.toString() + data.ReturnMsg + " | ";
+                            } else {
+                                var Msg = data.ReturnMsgNo.toString() + "|" + data.ReturnMsg;
+                                $scope.ngMsg = Msg.replace('1|新增成功', '');
+                                if ($scope.ngMsg == '') {
+                                    $scope.ngMsg = "1|新增成功";
+                                    $scope.inserting = false;
+                                    Clear();
+                                }
+                            }
+                            //$scope.ngMsg = data.ReturnMsgNo.toString() + "|" + data.ReturnMsg; 
+                            $.unblockUI();
+                        });
+                        break;
+                    case 'E':
+                        $http({ method: 'POST', url: url, data: indata, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }).  //, cache: $templateCache
+                        success(function (data) {
+                            if (data.ReturnMsgNo.toString() != "1") {
+                                $scope.ngMsg += "Sn " + Sn + " 失敗" + data.ReturnMsgNo.toString() + data.ReturnMsg + " | ";
+                            } else {
+                                var Msg = data.ReturnMsgNo.toString() + "|" + data.ReturnMsg;
+                                $scope.ngMsg = Msg.replace('1|新增成功', '');
+                                if ($scope.ngMsg == '') {
+                                    $scope.ngMsg = "1|新增成功";
+                                }
+                            }
+                        });
+                        $.unblockUI();
+                        break;
+                    case 'R':
+                        $http({ method: 'POST', url: url, data: indata, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }).  //, cache: $templateCache
+                        success(function (data) {
+                            $scope.ngMsg = data.ReturnMsgNo.toString() + "|" + data.ReturnMsg;
+                            $scope.inserting = false;
+                            Clear();
+                            $.unblockUI();
+                            if (data.ReturnMsgNo.toString() == "1")
+                                window.location.href = ajaxurl + "/" + FileName + ".xls";
+                        });
+                        break;
+                    case 'EMAIL':
+                        $http({ method: 'POST', url: url, data: indata, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }).  //, cache: $templateCache
+                        success(function (data) {
+                            $scope.ngMsg = data.ReturnMsgNo.toString() + "|" + data.ReturnMsg;
+                            $scope.inserting = false;
+                            Clear();
+                            $.unblockUI();
+                        });
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <div ng-controller="TESTCtrl">
+        <h1>商品資訊設定</h1>
+        <h2><span class="label label-default">新增商品標籤TEST</span></h2>
+        <br />
+        標籤名稱<input type="text" ng-model="ngTagName" />
+        <br />
+        標籤啟用狀態
+        <input type="radio" value="1" ng-model="ngStatus" /><span class="radio_text">啟用</span>
+        <input type="radio" value="0" ng-model="ngStatus" /><span class="radio_text">停用</span>
+        <br />
+        <input class="btn btn-default" type="button" value="查詢" ng-click="Query($scope.newpage)" />
+        <input class="btn btn-default" type="button" value="匯出Excel" ng-click="Report()" />
+        <input class="btn btn-default" type="button" value="寄信Email" ng-click="Email()" />
+        @*@Html.ActionLink("匯出Excel","ReportExcel","Default")*@
+        <br />
+        <div style="width: auto;">
+            <font color="red" size="5">{{ngMsg}}</font>
+        </div>
+        <br />
+        <input class="btn btn-default" type="button" type="button" value="新增" ng-click="OpenInsert()" ng-if="iButton" />
+        <div ng-show="inserting">
+            <table class="table table-bordered" style="width: auto;">
+                <tbody ng-repeat="insertrow in addinsertList">
+                    <tr>
+                        <td>標籤名稱</td>
+                        <td>
+                            <input type="text" ng-model="insertrow.TagName" /></td>
+                    </tr>
+                    <tr>
+                        <td>圖片網址</td>
+                        <td>
+                            <input type="text" ng-model="insertrow.ImageURL" style="width: 400px;" /></td>
+                    </tr>
+                    <tr>
+                        <td>標籤啟用狀態</td>
+                        <td>
+                            <input type="radio" value="1" ng-model="insertrow.State" /><span class="radio_text">啟用</span>
+                            <input type="radio" value="0" ng-model="insertrow.State" /><span class="radio_text">停用</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>權重</td>
+                        <td>
+                            <input type="text" ng-model="insertrow.Priority" />
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2">
+
+                            <div style="float: left;">
+                                <button class="btn btn-info" ng-click="addList()">增加一項</button>
+                            </div>
+                            <div style="text-align: right; float: right;">
+                                <button class="btn btn-primary" ng-click="add()">確定</button>
+                                <button class="btn btn-warning" ng-click="ClearIns()">取消</button>
+                            </div>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+            <br />
+            <br />
+            <br />
+        </div>
+        <br />
+        <br />
+
+        <div ng-show="ngtable">
+            本頁面快速搜尋<input type="search" ng-model="search" />
+            <br />
+            <table class="table table-bordered " style="width: auto;">
+                <thead>
+                    <tr ng-dblclick="allediting()">
+                        <td>標籤Sn</td>
+                        <td>標籤名稱</td>
+                        <td>標籤啟用狀態</td>
+                        <td>標籤圖片網址</td>
+                        <td>權重</td>
+                        <td></td>
+                    </tr>
+                </thead>
+                <tbody ng-repeat="Data in ReturnData | filter:search ">
+                    <tr ng-hide="Data.edit" ng-dblclick="Data.edit=true;Data.ngOneButton=true;">
+                        <td>{{Data.Sn}}</td>
+                        <td>{{Data.TagName}}</td>
+                        <td>{{Data.State}}</td>
+                        <td style="width: 400px;">{{Data.ImageURL}}</td>
+                        <td>{{Data.Priority}}</td>
+                        <td></td>
+                    </tr>
+                    <tr ng-show="Data.edit">
+                        <td>{{Data.Sn}}</td>
+                        <td>{{Data.TagName}}@*<input type="text" ng-model="Data.TagName">*@</td>
+                        <td>
+                            <input type="radio" value="啟用" ng-model="Data.State" /><span class="radio_text">啟用</span>
+                            <input type="radio" value="停用" ng-model="Data.State" /><span class="radio_text">停用</span>
+                        </td>
+                        <td>
+                            <input type="text" ng-model="Data.ImageURL" style="width: 400px;"></td>
+                        <td>
+                            <input type="number" ng-model="Data.Priority"></td>
+                        <td ng-show="Data.ngOneButton">
+                            <button class="btn btn-primary" ng-click="Data.edit=false;Update($index)">修改</button>
+                            <button class="btn btn-warning" ng-click="Data.edit=false;Query(nowpage)">取消</button>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="5">
+                            <div id="wrapper" class="pagination manu">
+                                <ul>
+                                    <li>
+                                        <a ng-if=" nowpage -1 > 0 " ng-click="Query(1)">First</a>
+                                    </li>
+                                    <li>
+                                        <a ng-if=" nowpage -1 > 0 " ng-click="Query((nowpage - 1))">上一頁</a>
+                                    </li>
+                                    <li ng-repeat="pageLists in pageList">
+                                        <a ng-if=" pageLists.page == nowpage " class="current">{{ pageLists.page }}</a>
+                                        <a ng-if=" (pageLists.page != nowpage && (nowpage-0) + 4 >= pageLists.page && pageLists.page >= (nowpage-0)) || (pageLists.page != nowpage && (nowpage-0) - 4 <= pageLists.page && (nowpage-0) >= pageLists.page)" ng-click="Query(pageLists.page)">{{ pageLists.page }}</a>
+                                    </li>
+                                    <li>
+                                        <a ng-if=" (nowpage-0) + 1 <= page " ng-click="Query(((nowpage-0) + 1))">下一頁</a>
+                                    </li>
+                                    <li>
+                                        <a ng-if=" (nowpage-0) + 1 <= page " ng-click="Query(page)">Last</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                        <td ng-show="alleditbutton">
+                            <button class="btn btn-primary" ng-click="UpdateAll()">修改全部</button>
+                            <button class="btn btn-warning" ng-click="alleditbutton = false;Query(nowpage)">取消</button>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+    </div>
+</body>
+</html>

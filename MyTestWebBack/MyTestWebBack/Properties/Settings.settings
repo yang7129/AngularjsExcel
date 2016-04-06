@@ -1,0 +1,18 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="MyTestWebBack.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="APCODE" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">MSMBK</Value>
+    </Setting>
+    <Setting Name="TestMode" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">true</Value>
+    </Setting>
+    <Setting Name="mailserviceip" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">10.16.1.211</Value>
+    </Setting>
+    <Setting Name="ajaxurl" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">http://10.16.1.247/MyTestWebBack</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
